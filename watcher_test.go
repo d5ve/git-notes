@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tanin47/git-notes/internal/test_helpers"
+	"git-notes/internal/test_helpers"
 	"log"
 	"os"
 	"testing"

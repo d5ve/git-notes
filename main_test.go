@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/tanin47/git-notes/internal/test_helpers"
+	"git-notes/internal/test_helpers"
 	"io/ioutil"
 	"os"
 	"testing"
