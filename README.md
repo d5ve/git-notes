@@ -1,3 +1,8 @@
+Fork Info
+=========
+
+This fork is to add the ability to specify which branch to use for each repo, rather than always using master.
+
 Git Notes
 ==========
 
