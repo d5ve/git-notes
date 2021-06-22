@@ -4,18 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"git-notes/internal/types"
 	"io/ioutil"
 )
 
 const defaultBranch = "master"
 
-type Repo struct {
-	Path   string
-	Branch string
-}
-
 type Config struct {
-	Repos []Repo
+	Repos []types.Repo
 }
 
 type ConfigReader interface {
@@ -44,7 +40,7 @@ func (c *JsonConfigReader) Read(path string) (*Config, error) {
 		for _, val := range rec {
 			switch val := val.(type) {
 			case string:
-				repo := Repo{Path: val, Branch: defaultBranch}
+				repo := types.Repo{Path: val, Branch: defaultBranch}
 				config.Repos = append(config.Repos, repo)
 			case map[string]interface{}:
 				rpath, found := val["path"]
@@ -55,7 +51,7 @@ func (c *JsonConfigReader) Read(path string) (*Config, error) {
 				if !found {
 					return nil, fmt.Errorf("Unable to read repo branch from %v", val)
 				}
-				repo := Repo{Path: rpath.(string), Branch: branch.(string)}
+				repo := types.Repo{Path: rpath.(string), Branch: branch.(string)}
 				config.Repos = append(config.Repos, repo)
 			default:
 				return nil, fmt.Errorf("Unexpected type %T in %v", val, val)

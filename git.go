@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"git-notes/internal/types"
 	"log"
 	"os"
 	"os/exec"
@@ -21,16 +22,16 @@ const (
 type State string
 
 type Git interface {
-	IsDirty(repo Repo) (bool, error)
-	GetState(repo Repo) (State, error)
-	Sync(repo Repo) error
-	Update(repo Repo) error
+	IsDirty(repo types.Repo) (bool, error)
+	GetState(repo types.Repo) (State, error)
+	Sync(repo types.Repo) error
+	Update(repo types.Repo) error
 }
 
 type GitCmd struct {
 }
 
-func (g *GitCmd) Sync(repo Repo) error {
+func (g *GitCmd) Sync(repo types.Repo) error {
 	state, err := g.GetState(repo)
 	log.Printf("Starting state: %s", state)
 	if err != nil {
@@ -60,7 +61,7 @@ func (g *GitCmd) Sync(repo Repo) error {
 	}
 }
 
-func runCmd(repo Repo, command string, args ...string) (string, error) {
+func runCmd(repo types.Repo, command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = repo.Path
 
@@ -68,7 +69,7 @@ func runCmd(repo Repo, command string, args ...string) (string, error) {
 	return string(out), err
 }
 
-func (g *GitCmd) IsDirty(repo Repo) (bool, error) {
+func (g *GitCmd) IsDirty(repo types.Repo) (bool, error) {
 	out, err := runCmd(repo, "git", "status", "--porcelain")
 	if err != nil {
 		return false, fmt.Errorf("unable to get status. Error: %v", err)
@@ -78,7 +79,7 @@ func (g *GitCmd) IsDirty(repo Repo) (bool, error) {
 	return dirty, nil
 }
 
-func (g *GitCmd) GetState(repo Repo) (State, error) {
+func (g *GitCmd) GetState(repo types.Repo) (State, error) {
 	log.Printf("Computing the state of %s", repo.Path)
 
 	dirty, err := g.IsDirty(repo)
@@ -96,7 +97,7 @@ func (g *GitCmd) GetState(repo Repo) (State, error) {
 	}
 }
 
-func ParseStatusBranch(repo Repo, status string) (State, error) {
+func ParseStatusBranch(repo types.Repo, status string) (State, error) {
 	// 5 variants of status branch
 	// ## $branch
 	// ## $branch...origin/$branch
@@ -144,7 +145,7 @@ func ParseStatusBranch(repo Repo, status string) (State, error) {
 	return Error, fmt.Errorf("unable to parse status: %v of repo: %s:%s", status, repo.Path, repo.Branch)
 }
 
-func GetStateAgainstRemote(repo Repo) (State, error) {
+func GetStateAgainstRemote(repo types.Repo) (State, error) {
 	_, err := runCmd(repo, "git", "fetch")
 	if err != nil {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
@@ -158,7 +159,7 @@ func GetStateAgainstRemote(repo Repo) (State, error) {
 	return ParseStatusBranch(repo, status)
 }
 
-func (g *GitCmd) Update(repo Repo) error {
+func (g *GitCmd) Update(repo types.Repo) error {
 	state, err := g.GetState(repo)
 
 	if err != nil {
@@ -179,7 +180,7 @@ func (g *GitCmd) Update(repo Repo) error {
 	return err
 }
 
-func AddAndCommit(repo Repo) error {
+func AddAndCommit(repo types.Repo) error {
 	err := Add(repo)
 	if err != nil {
 		return err
@@ -187,7 +188,7 @@ func AddAndCommit(repo Repo) error {
 	return Commit(repo)
 }
 
-func Merge(repo Repo) error {
+func Merge(repo types.Repo) error {
 	cmd := exec.Command("git", "merge", "origin/"+repo.Branch, "--allow-unrelated-histories", "--no-commit")
 	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
@@ -196,7 +197,7 @@ func Merge(repo Repo) error {
 	return nil
 }
 
-func Push(repo Repo) error {
+func Push(repo types.Repo) error {
 	cmd := exec.Command("git", "push", "origin", repo.Branch, "-u")
 	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
@@ -204,7 +205,7 @@ func Push(repo Repo) error {
 	return cmd.Run()
 }
 
-func Add(repo Repo) error {
+func Add(repo types.Repo) error {
 	cmd := exec.Command("git", "add", "--all")
 	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
@@ -212,7 +213,7 @@ func Add(repo Repo) error {
 	return cmd.Run()
 }
 
-func Commit(repo Repo) error {
+func Commit(repo types.Repo) error {
 	cmd := exec.Command("git", "-c", "user.name='Git notes'", "-c", "user.email='git-notes@noemail.com'", "commit", "-m", fmt.Sprintf("Commited at %v", time.Now()))
 	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout

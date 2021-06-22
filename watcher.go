@@ -1,12 +1,13 @@
 package main
 
 import (
+	"git-notes/internal/types"
 	"log"
 	"time"
 )
 
 type Watcher interface {
-	Watch(repo Repo, channel chan Repo)
+	Watch(repo types.Repo, channel chan types.Repo)
 }
 
 type GitWatcher struct {
@@ -21,7 +22,7 @@ func (f *GitWatcher) Stop() {
 	f.running = false
 }
 
-func (f *GitWatcher) Check(repo Repo, channel chan Repo) {
+func (f *GitWatcher) Check(repo types.Repo, channel chan types.Repo) {
 	dirty, err := f.git.IsDirty(repo)
 
 	if err != nil {
@@ -36,7 +37,7 @@ func (f *GitWatcher) Check(repo Repo, channel chan Repo) {
 	}
 }
 
-func (f *GitWatcher) Watch(repo Repo, channel chan Repo) {
+func (f *GitWatcher) Watch(repo types.Repo, channel chan types.Repo) {
 	f.running = true
 	go func() {
 		for f.running {
