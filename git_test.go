@@ -2,60 +2,66 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"git-notes/internal/test_helpers"
+	"git-notes/internal/types"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-
-func assertState(t *testing.T, path string, expectedState State) {
+func assertState(t *testing.T, repo types.Repo, expectedState State) {
 	gogit := GitCmd{}
-	state, err := gogit.GetState(path)
+	state, err := gogit.GetState(repo)
 	assert.NoError(t, err)
 	log.Printf("State: %v", state)
 	assert.Equal(t, expectedState, state)
 }
 
-func performUpdate(t *testing.T, path string) {
+func performUpdate(t *testing.T, repo types.Repo) {
 	gogit := GitCmd{}
-	err := gogit.Update(path)
+	err := gogit.Update(repo)
 	assert.NoError(t, err)
 }
 
-func performSync(t *testing.T, path string) {
+func performSync(t *testing.T, repo types.Repo) {
 	gogit := GitCmd{}
-	err := gogit.Sync(path)
+	err := gogit.Sync(repo)
 	assert.NoError(t, err)
 }
 
 func TestParseStatusBranch_NoRemote(t *testing.T) {
-	state, err := ParseStatusBranch("## master")
+	repo := types.Repo{"/dev/null", "master"}
+	state, err := ParseStatusBranch(repo, "## master")
 	assert.NoError(t, err)
 	assert.Equal(t, Ahead, state)
 }
 
 func TestParseStatusBranch_Sync(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master")
+	repo := types.Repo{"/dev/null", "master"}
+	state, err := ParseStatusBranch(repo, "## master...origin/master")
 	assert.NoError(t, err)
 	assert.Equal(t, Sync, state)
 }
 
 func TestParseStatusBranch_Ahead(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [ahead 1]")
+	repo := types.Repo{"/dev/null", "master"}
+	state, err := ParseStatusBranch(repo, "## master...origin/master [ahead 1]")
 	assert.NoError(t, err)
 	assert.Equal(t, Ahead, state)
 }
 
 func TestParseStatusBranch_OutOfSync(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [behind 99]")
+	repo := types.Repo{"/dev/null", "master"}
+	state, err := ParseStatusBranch(repo, "## master...origin/master [behind 99]")
 	assert.NoError(t, err)
 	assert.Equal(t, OutOfSync, state)
 }
 
 func TestParseStatusBranch_OutOfSync2(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [ahead 8, behind 99]")
+	repo := types.Repo{"/dev/null", "master"}
+	state, err := ParseStatusBranch(repo, "## master...origin/master [ahead 8, behind 99]")
 	assert.NoError(t, err)
 	assert.Equal(t, OutOfSync, state)
 }
@@ -261,7 +267,7 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 	assertState(t, repos.Local, Sync)
 }
 
-func makeConflict(t *testing.T, remote string) {
+func makeConflict(t *testing.T, remote types.Repo) {
 	anotherLocal := test_helpers.SetupGitRepo("another_local", false)
 	test_helpers.SetupRemote(anotherLocal, remote)
 	test_helpers.PerformCmd(t, anotherLocal, "git", "fetch")
@@ -293,4 +299,3 @@ func TestGoGit_SyncFixConflict(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 }
-

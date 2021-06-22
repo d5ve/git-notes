@@ -1,10 +1,14 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
+	"git-notes/internal/types"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
+
+// TODO: Define types.Repo{"some-path", "trunk"} here and use in tests.
 
 func TestGitRepoMonitor_StartMonitoring(t *testing.T) {
 	var gitRepoMonitor = GitRepoMonitor{
@@ -13,12 +17,12 @@ func TestGitRepoMonitor_StartMonitoring(t *testing.T) {
 	var watcher = MockWatcher{}
 	var git = MockGit{}
 
-	gitRepoMonitor.StartMonitoring("some-path", &watcher, &git)
+	gitRepoMonitor.StartMonitoring(types.Repo{"some-path", "trunk"}, &watcher, &git)
 
-	assert.Equal(t, "some-path", watcher.repoPath)
+	assert.Equal(t, types.Repo{"some-path", "trunk"}, watcher.repo)
 	assert.Equal(t, 1, git.Count)
 
-	watcher.channel <- watcher.repoPath
+	watcher.channel <- watcher.repo
 
 	time.Sleep(1 * time.Second)
 	assert.Equal(t, 2, git.Count)
@@ -31,11 +35,11 @@ func TestGitRepoMonitor_StartMonitoringAutomaticScheduleUpdate(t *testing.T) {
 	var watcher = MockWatcher{}
 	var git = MockGit{}
 
-	gitRepoMonitor.StartMonitoring("some-path", &watcher, &git)
+	gitRepoMonitor.StartMonitoring(types.Repo{"some-path", "trunk"}, &watcher, &git)
 
 	assert.Eventually(t, func() bool {
 		return git.Count >= 2
-	}, 1 * time.Second, 10 * time.Millisecond)
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
@@ -43,27 +47,27 @@ func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
 		scheduledUpdateInterval: 100 * time.Millisecond,
 	}
 
-	var channel = make(chan string)
-	var path string
+	var channel = make(chan types.Repo)
+	var repo types.Repo
 
 	go func() {
-		path = <-channel
+		repo = <-channel
 	}()
 
-	gitRepoMonitor.scheduleUpdate("some-path", channel)
+	gitRepoMonitor.scheduleUpdate(types.Repo{"some-path", "trunk"}, channel)
 
 	assert.Eventually(t, func() bool {
-		return path == "some-path"
-	}, 1 * time.Second, 10 * time.Millisecond)
+		return repo == types.Repo{"some-path", "trunk"}
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 type MockWatcher struct {
-	repoPath string
-	channel  chan string
+	repo    types.Repo
+	channel chan types.Repo
 }
 
-func (m *MockWatcher) Watch(path string, channel chan string) {
-	m.repoPath = path
+func (m *MockWatcher) Watch(repo types.Repo, channel chan types.Repo) {
+	m.repo = repo
 	m.channel = channel
 }
 
@@ -71,19 +75,19 @@ type MockGit struct {
 	Count int
 }
 
-func (m *MockGit) IsDirty(path string) (bool, error) {
+func (m *MockGit) IsDirty(repo types.Repo) (bool, error) {
 	return false, nil
 }
 
-func (m *MockGit) Sync(path string) error {
+func (m *MockGit) Sync(repo types.Repo) error {
 	m.Count++
 	return nil
 }
 
-func (m *MockGit) Update(path string) error {
+func (m *MockGit) Update(repo types.Repo) error {
 	return nil
 }
 
-func (m *MockGit) GetState(path string) (State, error) {
+func (m *MockGit) GetState(repo types.Repo) (State, error) {
 	return Sync, nil
 }
