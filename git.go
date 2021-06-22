@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	Error State = "error"
-	Dirty  State = "dirty"
+	Error     State = "error"
+	Dirty     State = "dirty"
 	Ahead     State = "ahead"
 	OutOfSync State = "out-of-sync"
 	Sync      State = "sync"
@@ -21,17 +21,17 @@ const (
 type State string
 
 type Git interface {
-	IsDirty(path string) (bool, error)
-	GetState(path string) (State, error)
-	Sync(path string) error
-	Update(path string) error
+	IsDirty(repo Repo) (bool, error)
+	GetState(repo Repo) (State, error)
+	Sync(repo Repo) error
+	Update(repo Repo) error
 }
 
 type GitCmd struct {
 }
 
-func (g *GitCmd) Sync(path string) error {
-	state, err := g.GetState(path)
+func (g *GitCmd) Sync(repo Repo) error {
+	state, err := g.GetState(repo)
 	log.Printf("Starting state: %s", state)
 	if err != nil {
 		return fmt.Errorf("performing GetState() failed. Err: %v", err)
@@ -42,11 +42,11 @@ func (g *GitCmd) Sync(path string) error {
 			return nil
 		}
 
-		err = g.Update(path)
+		err = g.Update(repo)
 		if err != nil {
 			return fmt.Errorf("performing Update() failed. Err: %v", err)
 		}
-		nextState, err := g.GetState(path)
+		nextState, err := g.GetState(repo)
 		if err != nil {
 			return fmt.Errorf("performing GetState() failed. Err: %v", err)
 		}
@@ -60,16 +60,16 @@ func (g *GitCmd) Sync(path string) error {
 	}
 }
 
-func runCmd(path string, command string, args... string) (string, error) {
+func runCmd(repo Repo, command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
-	cmd.Dir = path
+	cmd.Dir = repo.Path
 
 	out, err := cmd.CombinedOutput()
 	return string(out), err
 }
 
-func (g *GitCmd) IsDirty(path string) (bool, error) {
-	out, err := runCmd(path, "git", "status", "--porcelain")
+func (g *GitCmd) IsDirty(repo Repo) (bool, error) {
+	out, err := runCmd(repo, "git", "status", "--porcelain")
 	if err != nil {
 		return false, fmt.Errorf("unable to get status. Error: %v", err)
 	}
@@ -78,17 +78,17 @@ func (g *GitCmd) IsDirty(path string) (bool, error) {
 	return dirty, nil
 }
 
-func (g *GitCmd) GetState(path string) (State, error) {
-	log.Printf("Computing the state of %s", path)
+func (g *GitCmd) GetState(repo Repo) (State, error) {
+	log.Printf("Computing the state of %s", repo.Path)
 
-	dirty, err := g.IsDirty(path)
+	dirty, err := g.IsDirty(repo)
 	if err != nil {
 		return Error, fmt.Errorf("unable to get status. Error: %v", err)
 	}
 	if dirty {
 		return Dirty, nil
 	} else {
-		state, err := GetStateAgainstRemote(path)
+		state, err := GetStateAgainstRemote(repo)
 		if err != nil {
 			return Error, err
 		}
@@ -96,15 +96,16 @@ func (g *GitCmd) GetState(path string) (State, error) {
 	}
 }
 
-func ParseStatusBranch(status string) (State, error) {
+func ParseStatusBranch(repo Repo, status string) (State, error) {
 	// 5 variants of status branch
-	// ## master
-	// ## master...origin/master
-	// ## master...origin/master [ahead 1]
-	// ## master...origin/master [behind 1]
-	// ## master...origin/master [ahead 1, behind 1]
+	// ## $branch
+	// ## $branch...origin/$branch
+	// ## $branch...origin/$branch [ahead 1]
+	// ## $branch...origin/$branch [behind 1]
+	// ## $branch...origin/$branch [ahead 1, behind 1]
 
-	reg := regexp.MustCompile("## master(\\.\\.\\.origin\\/master *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?")
+	pat := fmt.Sprintf("## %s(\\.\\.\\.origin\\/%s *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?", repo.Branch, repo.Branch)
+	reg := regexp.MustCompile(pat)
 	matches := reg.FindAllStringSubmatch(status, -1)
 
 	if len(matches) == 0 {
@@ -116,22 +117,22 @@ func ParseStatusBranch(status string) (State, error) {
 		return Error, fmt.Errorf("unable to parse status: %v", status)
 	}
 
-	// ## master
+	// ## $branch
 	if groups[1] == "" {
 		return Ahead, nil
 	}
 
-	// ## master...origin/master
+	// ## $branch...origin/$branch
 	if groups[2] == "" {
 		return Sync, nil
 	}
 
-	// ## master...origin/master
+	// ## $branch...origin/$branch
 	if groups[3] == "behind" {
 		return OutOfSync, nil
 	}
 
-	// ## master...origin/master
+	// ## $branch...origin/$branch
 	if groups[3] == "ahead" {
 		if groups[4] == "" {
 			return Ahead, nil
@@ -140,80 +141,80 @@ func ParseStatusBranch(status string) (State, error) {
 		}
 	}
 
-	return Error, fmt.Errorf("unable to parse status: %v", status)
+	return Error, fmt.Errorf("unable to parse status: %v of repo: %s:%s", status, repo.Path, repo.Branch)
 }
 
-func GetStateAgainstRemote(path string) (State, error) {
-	_, err := runCmd(path, "git", "fetch")
+func GetStateAgainstRemote(repo Repo) (State, error) {
+	_, err := runCmd(repo, "git", "fetch")
 	if err != nil {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
 	}
 
-	status, err := runCmd(path, "git", "status", "--branch", "--porcelain")
+	status, err := runCmd(repo, "git", "status", "--branch", "--porcelain")
 	if err != nil {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
 	}
 
-	return ParseStatusBranch(status)
+	return ParseStatusBranch(repo, status)
 }
 
-func (g *GitCmd) Update(path string) error {
-	state, err := g.GetState(path)
+func (g *GitCmd) Update(repo Repo) error {
+	state, err := g.GetState(repo)
 
 	if err != nil {
-	  return err
+		return err
 	}
 
 	switch state {
 	case Error:
 	case Dirty:
-		err = AddAndCommit(path)
+		err = AddAndCommit(repo)
 	case Ahead:
-		err = Push(path)
+		err = Push(repo)
 	case OutOfSync:
-		err = Merge(path)
+		err = Merge(repo)
 	case Sync:
 	}
 
 	return err
 }
 
-func AddAndCommit(path string) error {
-	err := Add(path)
+func AddAndCommit(repo Repo) error {
+	err := Add(repo)
 	if err != nil {
 		return err
 	}
-	return Commit(path)
+	return Commit(repo)
 }
 
-func Merge(path string) error {
-	cmd := exec.Command("git", "merge", "origin/master", "--allow-unrelated-histories", "--no-commit")
-	cmd.Dir = path
+func Merge(repo Repo) error {
+	cmd := exec.Command("git", "merge", "origin/"+repo.Branch, "--allow-unrelated-histories", "--no-commit")
+	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	_ = cmd.Run() // Merge fails if there's conflict. So, we ignore the failure.
 	return nil
 }
 
-func Push(path string) error {
-	cmd := exec.Command("git", "push", "origin", "master", "-u")
-	cmd.Dir = path
+func Push(repo Repo) error {
+	cmd := exec.Command("git", "push", "origin", repo.Branch, "-u")
+	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func Add(path string) error {
+func Add(repo Repo) error {
 	cmd := exec.Command("git", "add", "--all")
-	cmd.Dir = path
+	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func Commit(path string) error {
+func Commit(repo Repo) error {
 	cmd := exec.Command("git", "-c", "user.name='Git notes'", "-c", "user.email='git-notes@noemail.com'", "commit", "-m", fmt.Sprintf("Commited at %v", time.Now()))
-	cmd.Dir = path
+	cmd.Dir = repo.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

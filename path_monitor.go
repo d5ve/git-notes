@@ -6,30 +6,30 @@ import (
 )
 
 type PathMonitor interface {
-	StartMonitoring(repoPath string, watcher Watcher, git Git)
-	scheduleUpdate(repoPath string, channel chan string)
+	StartMonitoring(repo Repo, watcher Watcher, git Git)
+	scheduleUpdate(repo Repo, channel chan Repo)
 }
 
 type GitRepoMonitor struct {
 	scheduledUpdateInterval time.Duration
 }
 
-func (g *GitRepoMonitor) scheduleUpdate(repoPath string, channel chan string) {
+func (g *GitRepoMonitor) scheduleUpdate(repo Repo, channel chan Repo) {
 	time.AfterFunc(g.scheduledUpdateInterval, func() {
-		channel <- repoPath
-		g.scheduleUpdate(repoPath, channel)
+		channel <- repo
+		g.scheduleUpdate(repo, channel)
 	})
 }
 
-func (g *GitRepoMonitor) StartMonitoring(repoPath string, watcher Watcher, git Git) {
-	var channel = make(chan string)
-	err := git.Sync(repoPath)
+func (g *GitRepoMonitor) StartMonitoring(repo Repo, watcher Watcher, git Git) {
+	var channel = make(chan Repo)
+	err := git.Sync(repo)
 	if err != nil {
 		log.Printf("Syncing failed. Err: %v", err)
 	}
-	g.scheduleUpdate(repoPath, channel)
+	g.scheduleUpdate(repo, channel)
 
-	watcher.Watch(repoPath, channel)
+	watcher.Watch(repo, channel)
 
 	go func() {
 		for {
@@ -41,5 +41,5 @@ func (g *GitRepoMonitor) StartMonitoring(repoPath string, watcher Watcher, git G
 		}
 	}()
 
-	log.Printf("Git notes is monitoring %s", repoPath)
+	log.Printf("Git notes is monitoring %s:%s", repo.Path, repo.Branch)
 }

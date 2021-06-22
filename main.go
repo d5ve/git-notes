@@ -14,11 +14,11 @@ func main() {
 
 	var git = NewGoGit()
 	var watcher = GitWatcher{
-		git:     &git,
-		running: false,
-		checkInterval: 10 * time.Second,
+		git:                    &git,
+		running:                false,
+		checkInterval:          10 * time.Second,
 		delayBeforeFiringEvent: 2 * time.Second,
-		delayAfterFiringEvent: 5 * time.Second,
+		delayAfterFiringEvent:  5 * time.Second,
 	}
 	var configReader = JsonConfigReader{}
 	var gitRepoMonitor = GitRepoMonitor{
@@ -44,8 +44,7 @@ func Run(git Git, watcher Watcher, configReader ConfigReader, monitor PathMonito
 	}
 
 	fmt.Println(config)
-	for _, repoPath := range config.Repos {
-		monitor.StartMonitoring(repoPath, watcher, git)
+	for _, repo := range config.Repos {
+		monitor.StartMonitoring(repo, watcher, git)
 	}
 }
-
