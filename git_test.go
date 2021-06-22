@@ -76,7 +76,7 @@ func TestGoGit_Rename(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 
-	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.Local, "test_name"), fmt.Sprintf("%s/%s", repos.Local, "TEST_NAME")))
+	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.Local.Path, "test_name"), fmt.Sprintf("%s/%s", repos.Local.Path, "TEST_NAME")))
 
 	assertState(t, repos.Local, Dirty)
 	performUpdate(t, repos.Local)
@@ -127,7 +127,7 @@ func TestGoGit_Deletion(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 
-	assert.NoError(t, os.Remove(fmt.Sprintf("%s/%s", repos.Local, "test.md")))
+	assert.NoError(t, os.Remove(fmt.Sprintf("%s/%s", repos.Local.Path, "test.md")))
 
 	assertState(t, repos.Local, Dirty)
 	performUpdate(t, repos.Local)
