@@ -49,7 +49,7 @@ func SetupGitRepo(tag string, bare bool) types.Repo {
 		log.Fatalf("Unable to create a temp dir for the Remote repo")
 	}
 
-	args := []string{"init"}
+	args := []string{"init", "--initial-branch", "trunk"}
 	if bare {
 		args = append(args, "--bare")
 	}
