@@ -74,8 +74,9 @@ func (g *GitCmd) IsDirty(repo types.Repo) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("unable to get status. Error: %v", err)
 	}
-
-	dirty := strings.TrimSpace(string(out)) != ""
+	out = strings.TrimSpace(string(out))
+	//fmt.Println("IsDirty(" + repo.Path + ") = [" + out + "]")
+	dirty := out != ""
 	return dirty, nil
 }
 
@@ -155,6 +156,9 @@ func GetStateAgainstRemote(repo types.Repo) (State, error) {
 	if err != nil {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
 	}
+
+	status = strings.TrimSpace(string(status))
+	//fmt.Println("GetStateAgainstRemote(" + repo.Path + ") = [" + status + "]")
 
 	return ParseStatusBranch(repo, status)
 }
