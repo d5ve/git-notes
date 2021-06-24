@@ -1,7 +1,9 @@
 {
   "repos": [
-    "/Users/tanin/projects/personal-notes",
-    "/Users/tanin/projects/another-personal-notes"
+    {
+      "path": "/Users/ash/todos",
+      "branch": "trunk"
+    },
+    "/Users/ash/projects/personal-notes"
   ]
 }
-
