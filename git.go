@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	Error State = "error"
-	Dirty  State = "dirty"
+	Error     State = "error"
+	Dirty     State = "dirty"
 	Ahead     State = "ahead"
 	OutOfSync State = "out-of-sync"
 	Sync      State = "sync"
@@ -21,6 +21,7 @@ const (
 type State string
 
 type Git interface {
+	GetCurrentBranch(path string) (string, error)
 	IsDirty(path string) (bool, error)
 	GetState(path string) (State, error)
 	Sync(path string) error
@@ -60,12 +61,21 @@ func (g *GitCmd) Sync(path string) error {
 	}
 }
 
-func runCmd(path string, command string, args... string) (string, error) {
+func runCmd(path string, command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = path
 
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+func (g *GitCmd) GetCurrentBranch(path string) (string, error) {
+	branch, err := runCmd(path, "git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("unable to get current branch. Error: %v", err)
+	}
+
+	return strings.TrimSpace(string(branch)), nil
 }
 
 func (g *GitCmd) IsDirty(path string) (bool, error) {
@@ -83,12 +93,16 @@ func (g *GitCmd) GetState(path string) (State, error) {
 
 	dirty, err := g.IsDirty(path)
 	if err != nil {
-		return Error, fmt.Errorf("unable to get status. Error: %v", err)
+		return Error, fmt.Errorf("unable to get dirty status. Error: %v", err)
 	}
 	if dirty {
 		return Dirty, nil
 	} else {
-		state, err := GetStateAgainstRemote(path)
+		branch, err := g.GetCurrentBranch(path)
+		if err != nil {
+			return Error, fmt.Errorf("unable to get current branch. Error: %v", err)
+		}
+		state, err := GetStateAgainstRemote(path, branch)
 		if err != nil {
 			return Error, err
 		}
@@ -145,7 +159,7 @@ func ParseStatusBranch(status string, branch string) (State, error) {
 	return Error, fmt.Errorf("unable to parse status: %v", status)
 }
 
-func GetStateAgainstRemote(path string) (State, error) {
+func GetStateAgainstRemote(path string, branch string) (State, error) {
 	_, err := runCmd(path, "git", "fetch")
 	if err != nil {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
@@ -156,14 +170,14 @@ func GetStateAgainstRemote(path string) (State, error) {
 		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
 	}
 
-	return ParseStatusBranch(status)
+	return ParseStatusBranch(status, branch)
 }
 
 func (g *GitCmd) Update(path string) error {
 	state, err := g.GetState(path)
 
 	if err != nil {
-	  return err
+		return err
 	}
 
 	switch state {
