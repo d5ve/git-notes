@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"git-notes/internal/test_helpers"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+var Branch string = fmt.Sprintf("branch-%d", os.Getpid())
 
 func assertState(t *testing.T, path string, expectedState State) {
 	gogit := GitCmd{}
@@ -31,31 +33,36 @@ func performSync(t *testing.T, path string) {
 }
 
 func TestParseStatusBranch_NoRemote(t *testing.T) {
-	state, err := ParseStatusBranch("## master")
+	status := fmt.Sprintf("## %s", Branch)
+	state, err := ParseStatusBranch(status, Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, Ahead, state)
 }
 
 func TestParseStatusBranch_Sync(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master")
+	status := fmt.Sprintf("## %s...origin/%s", Branch, Branch)
+	state, err := ParseStatusBranch(status, Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, Sync, state)
 }
 
 func TestParseStatusBranch_Ahead(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [ahead 1]")
+	status := fmt.Sprintf("## %s...origin/%s [ahead 1]", Branch, Branch)
+	state, err := ParseStatusBranch(status, Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, Ahead, state)
 }
 
 func TestParseStatusBranch_OutOfSync(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [behind 99]")
+	status := fmt.Sprintf("## %s...origin/%s [behind 99]", Branch, Branch)
+	state, err := ParseStatusBranch(status, Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, OutOfSync, state)
 }
 
 func TestParseStatusBranch_OutOfSync2(t *testing.T) {
-	state, err := ParseStatusBranch("## master...origin/master [ahead 8, behind 99]")
+	status := fmt.Sprintf("## %s...origin/%s [ahead8, behind 99]", Branch, Branch)
+	state, err := ParseStatusBranch(status, Branch)
 	assert.NoError(t, err)
 	assert.Equal(t, OutOfSync, state)
 }
@@ -293,4 +300,3 @@ func TestGoGit_SyncFixConflict(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 }
-
