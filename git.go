@@ -96,15 +96,16 @@ func (g *GitCmd) GetState(path string) (State, error) {
 	}
 }
 
-func ParseStatusBranch(status string) (State, error) {
+func ParseStatusBranch(status string, branch string) (State, error) {
 	// 5 variants of status branch
-	// ## master
-	// ## master...origin/master
-	// ## master...origin/master [ahead 1]
-	// ## master...origin/master [behind 1]
-	// ## master...origin/master [ahead 1, behind 1]
+	// ## $branch
+	// ## $branch...origin/$branch
+	// ## $branch...origin/$branch [ahead 1]
+	// ## $branch...origin/$branch [behind 1]
+	// ## $branch...origin/$branch [ahead 1, behind 1]
 
-	reg := regexp.MustCompile("## master(\\.\\.\\.origin\\/master *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?")
+	pat := fmt.Sprintf("## %s(\\.\\.\\.origin\\/%s *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?", branch, branch)
+	reg := regexp.MustCompile(pat)
 	matches := reg.FindAllStringSubmatch(status, -1)
 
 	if len(matches) == 0 {
@@ -116,26 +117,27 @@ func ParseStatusBranch(status string) (State, error) {
 		return Error, fmt.Errorf("unable to parse status: %v", status)
 	}
 
-	// ## master
+	// ## $branch
 	if groups[1] == "" {
 		return Ahead, nil
 	}
 
-	// ## master...origin/master
+	// ## $branch...origin/$branch
 	if groups[2] == "" {
 		return Sync, nil
 	}
 
-	// ## master...origin/master
+	// ## $branch...origin/$branch [behind 1]
 	if groups[3] == "behind" {
 		return OutOfSync, nil
 	}
 
-	// ## master...origin/master
 	if groups[3] == "ahead" {
 		if groups[4] == "" {
+			// ## $branch...origin/$branch [ahead 1]
 			return Ahead, nil
 		} else {
+			// ## $branch...origin/$branch [ahead 1, behind 1]
 			return OutOfSync, nil
 		}
 	}
