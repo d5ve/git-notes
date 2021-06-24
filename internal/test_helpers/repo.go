@@ -31,14 +31,14 @@ func SetupRepos() Repos {
 }
 
 func CleanupRepos(repos Repos) {
-	err := os.RemoveAll(repos.Remote)
-	if err != nil {
-		log.Fatalf("Unable to remove %s. Error: %v", repos.Remote, err)
-	}
+	CleanupRepo(repos.Remote)
+	CleanupRepo(repos.Local)
+}
 
-	err = os.RemoveAll(repos.Local)
+func CleanupRepo(path string) {
+	err := os.RemoveAll(path)
 	if err != nil {
-		log.Fatalf("Unable to remove %s. Error: %v", repos.Local, err)
+		log.Fatalf("Unable to remove %s. Error: %v", path, err)
 	}
 }
 
