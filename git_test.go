@@ -285,6 +285,8 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 
 func makeConflict(t *testing.T, remote string) {
 	anotherLocal := test_helpers.SetupGitRepo("another_local", false)
+	defer test_helpers.CleanupRepo(anotherLocal)
+
 	// Branch can differ depending on git config: init.defaultbranch
 	branch := test_helpers.GetLocalBranch(anotherLocal)
 
