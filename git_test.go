@@ -163,10 +163,13 @@ func TestGoGit_UpdateSync(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	assertState(t, repos.Local, Sync)
 	performUpdate(t, repos.Local)
@@ -177,10 +180,13 @@ func TestGoGit_UpdateOutOfSync(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	makeConflict(t, repos.Remote)
 
@@ -193,10 +199,13 @@ func TestGoGit_UpdateFixConflict(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test local")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	makeConflict(t, repos.Remote)
 	assertState(t, repos.Local, OutOfSync)
@@ -242,10 +251,13 @@ func TestGoGit_SyncSync(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	assertState(t, repos.Local, Sync)
 	performSync(t, repos.Local)
@@ -256,10 +268,13 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	makeConflict(t, repos.Remote)
 
@@ -270,9 +285,12 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 
 func makeConflict(t *testing.T, remote string) {
 	anotherLocal := test_helpers.SetupGitRepo("another_local", false)
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(anotherLocal)
+
 	test_helpers.SetupRemote(anotherLocal, remote)
 	test_helpers.PerformCmd(t, anotherLocal, "git", "fetch")
-	test_helpers.PerformCmd(t, anotherLocal, "git", "checkout", "master")
+	test_helpers.PerformCmd(t, anotherLocal, "git", "checkout", branch)
 	test_helpers.WriteFile(t, anotherLocal, "test.md", "Cause conflict")
 	test_helpers.PerformCmd(t, anotherLocal, "git", "add", "--all")
 	test_helpers.PerformCmd(t, anotherLocal, "git", "commit", "-m", "Test Remote")
@@ -283,10 +301,13 @@ func TestGoGit_SyncFixConflict(t *testing.T) {
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
 
+	// Branch can differ depending on git config: init.defaultbranch
+	branch := test_helpers.GetLocalBranch(repos.Local)
+
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent")
 	test_helpers.PerformCmd(t, repos.Local, "git", "add", "--all")
 	test_helpers.PerformCmd(t, repos.Local, "git", "commit", "-m", "Test local")
-	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.Local, "git", "push", "origin", branch, "-u")
 
 	makeConflict(t, repos.Remote)
 

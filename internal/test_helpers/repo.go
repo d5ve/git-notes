@@ -2,13 +2,14 @@ package test_helpers
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Repos struct {
@@ -73,14 +74,24 @@ func SetupRemote(local string, remote string) {
 	}
 }
 
+func GetLocalBranch(local string) string {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = local
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("Unable to get branch from %s. Error: %v", local, err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
 func WriteFile(t *testing.T, repoPath string, filePath string, content string) {
 	fullPath := fmt.Sprintf("%s/%s", repoPath, filePath)
 	log.Printf("Write file: %v, content: %v", fullPath, content)
 	assert.NoError(t, ioutil.WriteFile(fullPath, []byte(content), 0644))
 }
 
-
-func PerformCmd(t *testing.T, path string, cmd string, args... string) {
+func PerformCmd(t *testing.T, path string, cmd string, args ...string) {
 	log.Printf("Run cmd: %v", strings.Join(append([]string{cmd}, args...), " "))
 	c := exec.Command(cmd, args...)
 	c.Dir = path
