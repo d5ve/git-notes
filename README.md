@@ -3,6 +3,15 @@ Fork Info
 
 This fork is to add the ability to specify which branch to use for each repo, rather than always using master.
 
+Tests current fail for me for two reasons, I have git configured with
+`init.defaultbranch` set to something other than `master`, and the tests assume
+`master`, plus the rename test fails on my case-insensitive macos filesystem,
+where `test_name` and `TEST_NAME` are the same file..
+
+My plan is to have the git operations always check the current checked-out
+branch from the local repo, and use that in all commands where master is
+currently used or assumed.
+
 Git Notes
 ==========
 
