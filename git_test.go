@@ -269,6 +269,7 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 
 func makeConflict(t *testing.T, remote types.Repo) {
 	anotherLocal := test_helpers.SetupGitRepo("another_local", false)
+	defer test_helpers.CleanupRepo(anotherLocal.Path)
 	test_helpers.SetupRemote(anotherLocal, remote)
 	test_helpers.PerformCmd(t, anotherLocal, "git", "fetch")
 	test_helpers.PerformCmd(t, anotherLocal, "git", "checkout", anotherLocal.Branch)

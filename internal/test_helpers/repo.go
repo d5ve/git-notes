@@ -43,6 +43,13 @@ func CleanupRepos(repos Repos) {
 	}
 }
 
+func CleanupConfig(configDir string) {
+	err := os.RemoveAll(configDir)
+	if err != nil {
+		log.Fatalf("Unable to remove %s. Error: %v", configDir, err)
+	}
+}
+
 func SetupGitRepo(tag string, bare bool) types.Repo {
 	path, err := ioutil.TempDir("", fmt.Sprintf("git_test_%s", tag))
 	if err != nil {
@@ -64,6 +71,13 @@ func SetupGitRepo(tag string, bare bool) types.Repo {
 	return types.Repo{
 		Path:   path,
 		Branch: "trunk",
+	}
+}
+
+func CleanupRepo(repoDir string) {
+	err := os.RemoveAll(repoDir)
+	if err != nil {
+		log.Fatalf("Unable to remove %s. Error: %v", repoDir, err)
 	}
 }
 

@@ -21,6 +21,7 @@ func TestMainFunc(t *testing.T) {
 	defer test_helpers.CleanupRepos(repos)
 
 	configDir, err := ioutil.TempDir("", "git-notes-config-dir")
+	defer test_helpers.CleanupConfig(configDir)
 	assert.NoError(t, err)
 
 	test_helpers.WriteConfigFile(t, configDir, "git-notes.json", fmt.Sprintf(`{ "repos": [ { "path": "%s", "branch": "%s"} ] }`, repos.Local.Path, repos.Local.Branch))
