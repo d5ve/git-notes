@@ -76,6 +76,7 @@ func (g *GitCmd) GetCurrentBranch(path string) (string, error) {
 	}
 
 	return strings.TrimSpace(string(branch)), nil
+	return GetBranch(path)
 }
 
 func (g *GitCmd) IsDirty(path string) (bool, error) {
@@ -192,6 +193,15 @@ func (g *GitCmd) Update(path string) error {
 	}
 
 	return err
+}
+
+func GetBranch(path string) (string, error) {
+	branch, err := runCmd(path, "git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("unable to get current branch for %s. Error: %v", path, err)
+	}
+
+	return strings.TrimSpace(string(branch)), nil
 }
 
 func AddAndCommit(path string) error {
