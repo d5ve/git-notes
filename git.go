@@ -70,12 +70,6 @@ func runCmd(path string, command string, args ...string) (string, error) {
 }
 
 func (g *GitCmd) GetCurrentBranch(path string) (string, error) {
-	branch, err := runCmd(path, "git", "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil {
-		return "", fmt.Errorf("unable to get current branch. Error: %v", err)
-	}
-
-	return strings.TrimSpace(string(branch)), nil
 	return GetBranch(path)
 }
 
@@ -213,7 +207,13 @@ func AddAndCommit(path string) error {
 }
 
 func Merge(path string) error {
-	cmd := exec.Command("git", "merge", "origin/master", "--allow-unrelated-histories", "--no-commit")
+	branch, err := GetBranch(path)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Escape branches with spaces etc.
+	cmd := exec.Command("git", "merge", fmt.Sprintf("origin/%s", branch), "--allow-unrelated-histories", "--no-commit")
 	cmd.Dir = path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -222,7 +222,13 @@ func Merge(path string) error {
 }
 
 func Push(path string) error {
-	cmd := exec.Command("git", "push", "origin", "master", "-u")
+	branch, err := GetBranch(path)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Escape branches with spaces etc.
+	cmd := exec.Command("git", "push", "origin", branch, "-u")
 	cmd.Dir = path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
