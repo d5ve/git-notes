@@ -23,7 +23,7 @@ func TestMainFunc(t *testing.T) {
 	configDir, err := ioutil.TempDir("", "git-notes-config-dir")
 	assert.NoError(t, err)
 
-	test_helpers.WriteConfigFile(t, configDir, "git-notes.json", fmt.Sprintf(`{ "repos": [ "%s" ] }`, repos.Local))
+	test_helpers.WriteConfigFile(t, configDir, "git-notes.json", fmt.Sprintf(`{ "repos": [ { "path": "%s", "branch": "%s"} ] }`, repos.Local.Path, repos.Local.Branch))
 
 	oldArgs := os.Args
 	os.Args = []string{"app", fmt.Sprintf("%s/%s", configDir, "git-notes.json")}
