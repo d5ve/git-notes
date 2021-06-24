@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGitRepoMonitor_StartMonitoring(t *testing.T) {
@@ -35,7 +36,7 @@ func TestGitRepoMonitor_StartMonitoringAutomaticScheduleUpdate(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		return git.Count >= 2
-	}, 1 * time.Second, 10 * time.Millisecond)
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
@@ -54,7 +55,7 @@ func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		return path == "some-path"
-	}, 1 * time.Second, 10 * time.Millisecond)
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 type MockWatcher struct {
@@ -86,4 +87,8 @@ func (m *MockGit) Update(path string) error {
 
 func (m *MockGit) GetState(path string) (State, error) {
 	return Sync, nil
+}
+
+func (m *MockGit) GetCurrentBranch(path string) (string, error) {
+	return "trunk", nil
 }
