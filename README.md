@@ -3,6 +3,12 @@ Fork Info
 
 This fork is to add the ability to specify which branch to use for each repo, rather than always using master.
 
+* TODO: Should we just use whatever the current local branch is, and assume
+  that the remote will be set up correctly? This would allow us to remove all
+  the code passing around the branch name, and just ask git itself each time.
+* TODO: Commit messages mentioning filename etc and other useful data.
+* TODO: Set the commit email in the config file?
+
 Git Notes
 ==========
 
