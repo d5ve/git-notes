@@ -75,14 +75,14 @@ func SetupRemote(local string, remote string) {
 }
 
 func GetLocalBranch(local string) string {
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd := exec.Command("git", "symbolic-ref", "HEAD")
 	cmd.Dir = local
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Unable to get branch from %s. Error: %v", local, err)
 	}
-	return strings.TrimSpace(string(out))
+	return strings.TrimPrefix(strings.TrimSpace(string(out)), "refs/heads/")
 }
 
 func WriteFile(t *testing.T, repoPath string, filePath string, content string) {

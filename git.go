@@ -190,12 +190,14 @@ func (g *GitCmd) Update(path string) error {
 }
 
 func GetBranch(path string) (string, error) {
-	branch, err := runCmd(path, "git", "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil {
-		return "", fmt.Errorf("unable to get current branch for %s. Error: %v", path, err)
-	}
+	cmd := exec.Command("git", "symbolic-ref", "HEAD")
+	cmd.Dir = path
 
-	return strings.TrimSpace(string(branch)), nil
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimPrefix(strings.TrimSpace(string(out)), "refs/heads/"), nil
 }
 
 func AddAndCommit(path string) error {
