@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"git-notes/internal/test_helpers"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMainFunc(t *testing.T) {
@@ -20,6 +21,7 @@ func TestMainFunc(t *testing.T) {
 
 	configDir, err := ioutil.TempDir("", "git-notes-config-dir")
 	assert.NoError(t, err)
+	defer test_helpers.CleanupRepo(configDir)
 
 	test_helpers.WriteFile(t, configDir, "git-notes.json", fmt.Sprintf(`{ "repos": [ "%s" ] }`, repos.Local))
 
@@ -41,7 +43,7 @@ func TestMainFunc(t *testing.T) {
 		state, err := git.GetState(repos.Local)
 		assert.NoError(t, err)
 		return state == Sync
-	}, 15 * time.Second, 1 * time.Second)
+	}, 15*time.Second, 1*time.Second)
 
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent2")
 
@@ -53,7 +55,7 @@ func TestMainFunc(t *testing.T) {
 		state, err := git.GetState(repos.Local)
 		assert.NoError(t, err)
 		return state == Sync
-	}, 15 * time.Second, 1 * time.Second)
+	}, 15*time.Second, 1*time.Second)
 
 	Running = false
 }
