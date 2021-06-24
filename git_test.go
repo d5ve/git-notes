@@ -76,7 +76,7 @@ func TestGoGit_Rename(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 
-	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.Local.Path, "test_name"), fmt.Sprintf("%s/%s", repos.Local.Path, "TEST_NAME")))
+	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.Local.Path, "test_name"), fmt.Sprintf("%s/%s", repos.Local.Path, "test-name")))
 
 	assertState(t, repos.Local, Dirty)
 	performUpdate(t, repos.Local)
