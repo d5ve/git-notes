@@ -7,6 +7,13 @@ repos and using whichever branch they currently have checked out.
 This allows things to work when the user has a non-default init.defaultbranch
 setting.
 
+Fork TODO
+=========
+
+* Use a more meaningful commit message, perhaps holding the filenames.
+* Support branch names with legal-but-uncommon characters (space, ", ', etc)
+* Set the commit email in the config file, perhaps.
+
 Git Notes
 ==========
 
